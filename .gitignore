@@ -1,0 +1,14 @@
+/build/
+/data/
+omnicore_hack
+
+*.o
+*.obj
+
+*~ 
+*.swp
+
+*.d
+
+.idea/
+.vscode/
