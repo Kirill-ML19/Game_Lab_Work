@@ -1,4 +1,3 @@
-// Item.h
 #ifndef ITEM_H
 #define ITEM_H
 
@@ -7,7 +6,9 @@
 enum class ItemType {
     WEAPON,
     ARMOR,
-    POTION,
+    HEALTH_POTION,
+    STRENGTH_POTION,
+    DEFENSE_POTION,
     MISC
 };
 
@@ -19,6 +20,7 @@ public:
     std::string getName() const;
     ItemType getType() const;
     int getPower() const;
+    std::string getDescription() const;
 
 private:
     std::string name_;

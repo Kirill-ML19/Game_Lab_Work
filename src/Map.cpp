@@ -14,7 +14,14 @@ bool Map::isWalkable(int x, int y) const {
     if (x < 0 || x >= width_ || y < 0 || y >= height_)
         return false;
     char c = tiles_[y][x];
-    return c == '.' || c == 'P' || c == 'E'; 
+    return c == '.' || c == 'P' || c == 'E' || c == 'C'; 
+}
+
+char Map::getTile(int x, int y) const {
+    if (x >= 0 && x < width_ && y >= 0 && y < height_) {
+        return tiles_[y][x];
+    }
+    return '#';
 }
 
 void Map::setTile(int x, int y, char symbol) {

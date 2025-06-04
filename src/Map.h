@@ -16,6 +16,7 @@ public:
     int getHeight() const;
 
     void clear();  
+    char getTile(int x, int y) const;
 
 private:
     int width_;

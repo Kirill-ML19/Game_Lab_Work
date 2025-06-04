@@ -11,6 +11,7 @@ struct InventoryItem {
 
     InventoryItem(const Item& item, int count = 1)
         : item(item), count(count) {}
+    
 };
 
 class Inventory {
@@ -20,6 +21,8 @@ public:
     void listItems() const;
     std::optional<Item> getItem(const std::string& name) const;
     bool useItem(const std::string& name); 
+    const std::vector<InventoryItem>& getItems() const;
+    bool hasItem(const std::string& name) const;
 
 private:
     std::vector<InventoryItem> items_;

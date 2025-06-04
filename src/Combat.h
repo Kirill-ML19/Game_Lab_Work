@@ -3,6 +3,7 @@
 
 #include "Player.h"
 #include "Enemy.h"
+#include "Inventory.h"
 
 class Combat {
 public:
@@ -17,6 +18,7 @@ private:
     void playerTurn();
     void enemyTurn();
     bool isCombatOver() const;
+    void useItemInCombat();
 };
 
 #endif

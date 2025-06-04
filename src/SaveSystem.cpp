@@ -1,49 +1,102 @@
 #include "SaveSystem.h"
+#include "SaveData.h"      
 #include <fstream>
 #include <iostream>
+#include <vector>
+#include <cstring>        
 
 bool SaveSystem::saveGame(const std::string& filename, const Player& player, const LevelManager& levelManager) {
-    std::ofstream file(filename, std::ios::binary);
+    std::ofstream file(filename, std::ios::binary | std::ios::trunc);
     if (!file) {
         std::cerr << "Error opening file for saving\n";
         return false;
     }
 
-    int x = player.getX();
-    int y = player.getY();
-    int health = player.getHealth();
-    int xp = player.getXP();
-    int level = levelManager.getCurrentLevelNumber();
+    PlayerData pd;
+    pd.x = player.getX();
+    pd.y = player.getY();
+    pd.health = player.getHealth();
+    pd.maxHealth = player.getMaxHealth();
+    pd.level = player.getLevel();
+    pd.xp = player.getXP();
+    pd.xpToNextLevel = player.getXPToNextLevel();
+    
+    strncpy(pd.equippedWeaponName, player.getEquippedWeapon().getName().c_str(), 49);
+    pd.equippedWeaponName[49] = '\0';
+    strncpy(pd.equippedArmorName, player.getEquippedArmor().getName().c_str(), 49);
+    pd.equippedArmorName[49] = '\0';
+    
+    file.write(reinterpret_cast<const char*>(&pd), sizeof(PlayerData));
 
-    file.write(reinterpret_cast<const char*>(&x), sizeof(x));
-    file.write(reinterpret_cast<const char*>(&y), sizeof(y));
-    file.write(reinterpret_cast<const char*>(&health), sizeof(health));
-    file.write(reinterpret_cast<const char*>(&xp), sizeof(xp));
-    file.write(reinterpret_cast<const char*>(&level), sizeof(level));
+    const auto& inventoryItems = player.getInventory().getItems();
+    size_t itemCount = inventoryItems.size();
+    file.write(reinterpret_cast<const char*>(&itemCount), sizeof(itemCount));
+
+    for (const auto& invItem : inventoryItems) {
+        ItemData id;
+        strncpy(id.name, invItem.item.getName().c_str(), 49);
+        id.name[49] = '\0';
+        id.type = invItem.item.getType();
+        id.power = invItem.item.getPower();
+        id.count = invItem.count;
+        file.write(reinterpret_cast<const char*>(&id), sizeof(ItemData));
+    }
+
+    int currentLevel = levelManager.getCurrentLevelNumber();
+    file.write(reinterpret_cast<const char*>(&currentLevel), sizeof(currentLevel));
 
     file.close();
+    std::cout << "Game saved successfully!\n";
     return true;
 }
 
 bool SaveSystem::loadGame(const std::string& filename, Player& player, LevelManager& levelManager) {
     std::ifstream file(filename, std::ios::binary);
     if (!file) {
-        std::cerr << "Error opening file for download\n";
+        std::cerr << "Error opening file for loading\n";
         return false;
     }
 
-    int x, y, health, xp, level;
-    file.read(reinterpret_cast<char*>(&x), sizeof(x));
-    file.read(reinterpret_cast<char*>(&y), sizeof(y));
-    file.read(reinterpret_cast<char*>(&health), sizeof(health));
-    file.read(reinterpret_cast<char*>(&xp), sizeof(xp));
-    file.read(reinterpret_cast<char*>(&level), sizeof(level));
+    PlayerData pd;
+    file.read(reinterpret_cast<char*>(&pd), sizeof(PlayerData));
+    if (file.gcount() != sizeof(PlayerData)) return false; 
 
-    player.setPosition(x, y);
-    player.setHealth(health);
-    player.setXP(xp);
-    levelManager.loadLevel(level);
+    player.setPosition(pd.x, pd.y);
+    player.setMaxHealth(pd.maxHealth);
+    player.setHealth(pd.health);
+    player.setLevel(pd.level);
+    player.setXP(pd.xp);
+    player.setXPToNextLevel(pd.xpToNextLevel);
+
+    player.clearInventory();
+    
+    size_t itemCount;
+    file.read(reinterpret_cast<char*>(&itemCount), sizeof(itemCount));
+    if (file.gcount() != sizeof(itemCount)) return false;
+
+    for (size_t i = 0; i < itemCount; ++i) {
+        ItemData id;
+        file.read(reinterpret_cast<char*>(&id), sizeof(ItemData));
+        if (file.gcount() != sizeof(ItemData)) return false;
+
+        Item item(id.name, id.type, id.power);
+        for (int c = 0; c < id.count; ++c) {
+            player.addItemToInventory(item);
+        }
+    }
+
+    auto weaponOpt = player.getInventory().getItem(pd.equippedWeaponName);
+    if (weaponOpt) player.equipWeapon(*weaponOpt);
+
+    auto armorOpt = player.getInventory().getItem(pd.equippedArmorName);
+    if (armorOpt) player.equipArmor(*armorOpt);
+
+    int currentLevel;
+    file.read(reinterpret_cast<char*>(&currentLevel), sizeof(currentLevel));
+    if (file.gcount() != sizeof(currentLevel)) return false;
+    levelManager.loadLevel(currentLevel);
 
     file.close();
+    std::cout << "Game loaded successfully!\n";
     return true;
 }

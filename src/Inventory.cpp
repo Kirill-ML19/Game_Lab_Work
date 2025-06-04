@@ -35,13 +35,12 @@ void Inventory::listItems() const {
         std::cout << "  (Empty)\n";
         return;
     }
+
+    int index=1;
     for (const auto& invItem : items_) {
-        std::cout << " - " << invItem.item.getName()
+        std::cout << index++ << ". " << invItem.item.getName()
                   << " x" << invItem.count
-                  << " (" << (invItem.item.getType() == ItemType::WEAPON ? "Weapon" :
-                              invItem.item.getType() == ItemType::ARMOR ? "Armor" :
-                              invItem.item.getType() == ItemType::POTION ? "Potion" : "Other")
-                  << ", Power: " << invItem.item.getPower() << ")\n";
+                  << " - " << invItem.item.getDescription() << "\n"; 
     }
 }
 
@@ -53,6 +52,13 @@ std::optional<Item> Inventory::getItem(const std::string& name) const {
         return it->item;
     }
     return std::nullopt;
+}
+
+bool Inventory::hasItem(const std::string& name) const {
+    return std::any_of(items_.begin(), items_.end(),
+        [&](const InventoryItem& invItem) {
+            return invItem.item.getName() == name;
+        });
 }
 
 bool Inventory::useItem(const std::string& name) {
@@ -67,4 +73,8 @@ bool Inventory::useItem(const std::string& name) {
         return true; 
     }
     return false; 
+}
+
+const std::vector<InventoryItem>& Inventory::getItems() const {
+    return items_;
 }

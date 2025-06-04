@@ -18,11 +18,7 @@ bool LevelManager::canGoToNextLevel() const {
     auto room = getCurrentRoom();
     if (!room) return false;
 
-    for (const auto& enemy : room->getEnemies()) {
-        if (!enemy.isDead())
-            return false;
-    }
-    return true;
+    return room->getEnemies().empty();
 }
 
 void LevelManager::nextLevel() {
@@ -56,8 +52,9 @@ std::shared_ptr<Room> LevelManager::generateRandomRoom(int levelNumber) {
 
 std::vector<Enemy> LevelManager::generateEnemies(int levelNumber) {
     std::vector<Enemy> enemies;
-    std::uniform_int_distribution<int> countDist(1, 3); 
-    int enemyCount = countDist(rng_);
+    int maxEnemies = std::min(3,1 + levelNumber);
+    std::uniform_int_distribution<int> countDist(1, maxEnemies); 
+    int enemyCount = (levelNumber==0) ? 1 : countDist(rng_);
 
     std::vector<std::string> enemyTypes = {"Goblin", "Skeleton", "Orc"};
 
@@ -73,6 +70,14 @@ std::vector<Enemy> LevelManager::generateEnemies(int levelNumber) {
         int attack = attackDist(rng_);
         int defense = defenseDist(rng_);
         int xp = xpDist(rng_);
+
+        std::uniform_int_distribution<int> eliteChance(0, 99);
+        if (eliteChance(rng_) < 20) {
+            type = "Elite " + type;
+            health = static_cast<int>(health * 1.5);
+            attack = static_cast<int>(attack * 1.5);
+            xp = static_cast<int>(xp * 2);
+        }
 
         enemies.emplace_back(type, health, attack, defense, xp);
     }
